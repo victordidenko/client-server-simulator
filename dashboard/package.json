@@ -1,0 +1,32 @@
+{
+  "name": "request-policy-dashboard",
+  "version": "0.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "format": "biome format --verbose --write .",
+    "lint": "biome check --verbose",
+    "dev": "vite"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "solid-devtools": "^0.34.4",
+    "vite": "^7.1.9",
+    "vite-plugin-solid": "^2.11.9"
+  },
+  "dependencies": {
+    "@biomejs/biome": "^2.2.5",
+    "@dschz/solid-uplot": "^0.2.0",
+    "@farfetched/core": "^0.13.2",
+    "@tailwindcss/vite": "^4.1.14",
+    "@withease/contracts": "^1.1.0",
+    "effector": "^23.4.4",
+    "effector-solid": "^0.23.0",
+    "patronum": "^2.3.0",
+    "solid-js": "^1.9.9",
+    "solid-prism-editor": "^2.1.0",
+    "tailwindcss": "^4.1.14",
+    "uplot": "^1.6.32"
+  }
+}

@@ -1,0 +1,192 @@
+# Adaptive Backoff Policy with Failure Severity Weighting
+# Uses request duration to determine failure severity and calculate appropriate backoff
+#
+# - Weights failures based on how long they took (timeouts are worse than quick failures)
+# - Uses sliding window to track recent failure patterns
+# - Implements gradual recovery with reduced backoff after first success
+# - Combines global backoff policy with per-request retry logic
+
+
+MAX_RETRIES = 5
+DEFAULT_HTTP_TIMEOUT = 10000
+INTERVAL_MILLIS = 500  # 0.5 sec                 # The amount of milliseconds to exponentially increase
+BACKOFF_FACTOR = 2                               # The factor to backoff by
+BACKOFF_LIMIT_MILLIS = 10 * 60 * 1000  # 10 min  # The maximum milliseconds to increase to
+RANDOM_FACTOR = 0.2                              # The percentage of backoff time to randomize by
+
+HTTP_LATENCY = 500  # Expected normal latency: 0.5 seconds
+MIN_DURATION = HTTP_LATENCY
+MAX_DURATION = DEFAULT_HTTP_TIMEOUT - HTTP_LATENCY
+MAX_RETRY_DELAY = 60 * 1000  # 1 minute max retry delay
+
+
+def set_state():
+    return {
+        "bucket": {
+            "limit": 0,  # Timestamp before which requests are prohibited
+            "failures": [],  # List of [timestamp, color] pairs
+            "backoff": 0,  # Last calculated backoff in milliseconds
+            "successes": 0  # Counter of successful requests after failures
+        }
+    }
+
+
+def calculate_backoff_millis(count):
+    # Calculate exponential base delay
+    base = INTERVAL_MILLIS * int(pow(BACKOFF_FACTOR, count))
+
+    # Add bounded jitter: ±(random_factor * base)
+    # random() returns [0, 1), so (random() - 0.5) * 2 gives us [-1, 1)
+    fuzz_range = RANDOM_FACTOR * base
+    fuzz = int(fuzz_range * (random() - 0.5) * 2)
+
+    result = base + fuzz
+
+    # Ensure result is within bounds
+    return min(BACKOFF_LIMIT_MILLIS, max(INTERVAL_MILLIS, result))
+
+
+# Map duration to color (0-9) representing failure severity
+def color_from_duration(duration):
+    if duration <= MIN_DURATION:
+        return 0
+    if duration > MAX_DURATION:
+        return 9
+    # Calculate range step for colors 1-8
+    range_step = (MAX_DURATION - MIN_DURATION) / 8.0
+    color = int((duration - MIN_DURATION) / range_step) + 1
+    return min(9, max(1, color))
+
+
+# Calculate request weight from color using quadratic function
+# Lower colors (quick failures) have weight ~1, higher colors grow quadratically
+def weight_from_color(color):
+    w = 1 + (1.0 / 27.0) * (color * color)
+    return w
+
+
+# Check if request should be blocked based on current adaptive backoff limit
+def on_request(req):
+    state = get_state()
+    bucket = state["bucket"]
+    current_time = now()
+
+    # Store request start time for duration calculation
+    req["meta"]["start_time"] = current_time
+
+    # Check if we're still in backoff period
+    if current_time <= bucket["limit"]:
+        # Block request - still in backoff
+        return {"allow": False, "delay": 0}
+
+    return {"allow": True, "delay": 0, "timeout": DEFAULT_HTTP_TIMEOUT}
+
+
+# Handle successful response - implement gradual recovery
+def on_response(req, resp):
+    state = get_state()
+    bucket = state["bucket"]
+
+    # Only process if we have failure data
+    if not bucket["failures"]:
+        return
+
+    if bucket["successes"] < 1:
+        # First success after failures - reduce backoff
+        bucket["successes"] += 1
+        bucket["backoff"] = max(int(bucket["backoff"] / BACKOFF_FACTOR), INTERVAL_MILLIS)
+        bucket["limit"] = now()
+    else:
+        # Second success - full recovery, clear all failure state
+        bucket["limit"] = 0
+        bucket["failures"] = []
+        bucket["backoff"] = 0
+        bucket["successes"] = 0
+
+
+# Handle error response
+def on_error(req, resp):
+    handle_failure(req)
+
+
+# Handle network failure
+def on_fail(req, err):
+    handle_failure(req)
+
+
+# Common failure handling logic with severity-based backoff
+def handle_failure(req):
+    state = get_state()
+    bucket = state["bucket"]
+    current_time = now()
+
+    # Calculate request duration and determine failure severity
+    start_time = req["meta"].get("start_time", current_time)
+    duration = current_time - start_time
+    color = color_from_duration(duration)
+    weight = weight_from_color(color)
+
+    if not bucket["failures"]:
+        # First failure - initialize bucket data
+        bucket["backoff"] = calculate_backoff_millis(weight)
+        bucket["limit"] = current_time + bucket["backoff"]
+        bucket["failures"] = [[current_time, color]]
+        bucket["successes"] = 0
+    else:
+        # Additional failure - calculate cumulative weight from sliding window
+        window = int((BACKOFF_FACTOR + 1) * bucket["backoff"])
+        window_start = current_time - window
+
+        # Sum weights of recent failures within the window
+        weights_sum = 0.0
+        for failure_time, failure_color in bucket["failures"]:
+            if failure_time >= window_start:
+                weights_sum += weight_from_color(failure_color)
+
+        # Calculate new backoff based on total accumulated weight
+        total_count = weight + weights_sum
+        bucket["backoff"] = calculate_backoff_millis(total_count)
+        bucket["limit"] = current_time + bucket["backoff"]
+        bucket["failures"].append([current_time, color])
+        bucket["successes"] = 0
+
+        # Clean up old failures outside cleanup window
+        cleanup_threshold = current_time - ((BACKOFF_FACTOR + 1) * BACKOFF_LIMIT_MILLIS)
+        bucket["failures"] = [[t, c] for t, c in bucket["failures"] if t > cleanup_threshold]
+
+
+# Retry logic respecting both global adaptive backoff and per-request retry backoff
+def on_retry(req, resp, err):
+    state = get_state()
+    bucket = state["bucket"]
+    current_time = now()
+
+    # Get or initialize retry attempt count for this specific request
+    retry_count = req["meta"].get("retry_count", 0)
+
+    # Check if max retries exceeded
+    if retry_count >= MAX_RETRIES:
+        return {"allow": False, "delay": 0}
+
+    req["meta"]["retry_count"] = retry_count + 1
+
+    # Calculate individual retry backoff (separate from global policy)
+    retry_backoff = calculate_backoff_millis(retry_count)
+
+    # Calculate when global adaptive policy allows requests
+    global_backoff_end = bucket["limit"]
+
+    # Determine the actual delay needed
+    if current_time >= global_backoff_end:
+        # Global policy allows requests, use individual retry backoff
+        delay = retry_backoff
+    else:
+        # Global policy is blocking, wait for the longer of the two
+        global_remaining = global_backoff_end - current_time
+        delay = max(retry_backoff, global_remaining)
+
+    # Check if delay exceeds maximum threshold
+    if delay > MAX_RETRY_DELAY:
+        return {"allow": False, "delay": 0}
+
+    return {"allow": True, "delay": delay}
