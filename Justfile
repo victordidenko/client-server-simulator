@@ -1,7 +1,7 @@
-run:
+dev:
   go run ./cmd
 
-race:
+dev-race:
   go run -race ./cmd
 
 build:

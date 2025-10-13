@@ -16,7 +16,7 @@
     "vite-plugin-solid": "^2.11.9"
   },
   "dependencies": {
-    "@biomejs/biome": "^2.2.5",
+    "@biomejs/biome": "^2.2.6",
     "@dschz/solid-uplot": "^0.2.0",
     "@farfetched/core": "^0.13.2",
     "@tailwindcss/vite": "^4.1.14",

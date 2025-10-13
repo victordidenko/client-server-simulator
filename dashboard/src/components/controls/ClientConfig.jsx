@@ -10,33 +10,51 @@ import {
 } from 'solid-js'
 import { clients, simulation } from '../../app'
 import { useSessionSignal } from '../../utils/signals'
-import noopBehaviorCode from './behaviors/0-noop.star?raw'
-import simpleRetriesBehaviorCode from './behaviors/1-simple-retries.star?raw'
-import exponentialRetriesBehaviorCode from './behaviors/2-exponential-backoff.star?raw'
-import exponentialJitteredRetriesBehaviorCode from './behaviors/3-exponential-backoff-jitter.star?raw'
-import exponentialJitteredCircuitBreakerRetriesBehaviorCode from './behaviors/4-exponential-backoff-jitter-cb.star?raw'
-import exponentialJitteredRetryBudgetRetriesBehaviorCode from './behaviors/5-exponential-backoff-jitter-rb.star?raw'
-import requestPolicyBehaviorCode from './behaviors/6-request-policy.star?raw'
-import requestPolicyDecayNoColorBehaviorCode from './behaviors/7-request-policy-decay-no-color.star?raw'
-import requestPolicyDecayNoColorPostponeRetryBehaviorCode from './behaviors/8-request-policy-decay-no-color-postpone-retry.star?raw'
+import b01_noopBehaviorCode from './behaviors/01-noop.star?raw'
+import b02_simpleRetriesBehaviorCode from './behaviors/02-simple-retries.star?raw'
+import b03_exponentialRetriesBehaviorCode from './behaviors/03-exponential-backoff.star?raw'
+import b04_exponentialJitteredRetriesBehaviorCode from './behaviors/04-exponential-backoff-jitter.star?raw'
+import b05_exponentialJitteredCircuitBreakerRetriesBehaviorCode from './behaviors/05-exponential-backoff-jitter-cb.star?raw'
+import b06_exponentialJitteredRetryBudgetRetriesBehaviorCode from './behaviors/06-exponential-backoff-jitter-rb.star?raw'
+import b07_requestPolicyBehaviorCode from './behaviors/07-request-policy.star?raw'
+import b08_requestPolicyDecayNoColorBehaviorCode from './behaviors/08-request-policy-decay-no-color.star?raw'
+import b09_requestPolicyDecayNoColorPostponeRetryBehaviorCode from './behaviors/09-request-policy-decay-no-color-postpone-retry.star?raw'
+import b10_requestPolicyDecayNoColorPostponeAllBehaviorCode from './behaviors/10-request-policy-decay-no-color-postpone-all.star?raw'
 import { ClientBehaviorEditor } from './ClientBehaviorEditor'
 import { Input } from './Input'
 import { MutationErrorIndicator } from './MutationErrorIndicator'
 import { Slider } from './Slider'
 
 const behaviors = {
-  'Noop': noopBehaviorCode,
-  'Simple retries': simpleRetriesBehaviorCode,
-  'Exponential backoff': exponentialRetriesBehaviorCode,
-  'Exponential backoff w/jitter': exponentialJitteredRetriesBehaviorCode,
-  'Exponential backoff w/jitter and circuit breaker':
-    exponentialJitteredCircuitBreakerRetriesBehaviorCode,
-  'Exponential backoff w/jitter and retry budget':
-    exponentialJitteredRetryBudgetRetriesBehaviorCode,
-  'Request policy': requestPolicyBehaviorCode,
-  'Request policy (decay, no color)': requestPolicyDecayNoColorBehaviorCode,
-  'Request policy (decay, no color, postpone retry)':
-    requestPolicyDecayNoColorPostponeRetryBehaviorCode,
+  '01. Noop': //
+    b01_noopBehaviorCode,
+
+  '02. Simple retries': //
+    b02_simpleRetriesBehaviorCode,
+
+  '03. Exponential backoff': //
+    b03_exponentialRetriesBehaviorCode,
+
+  '04. Exponential backoff w/jitter': //
+    b04_exponentialJitteredRetriesBehaviorCode,
+
+  '05. Exponential backoff w/jitter and circuit breaker': //
+    b05_exponentialJitteredCircuitBreakerRetriesBehaviorCode,
+
+  '06. Exponential backoff w/jitter and retry budget': //
+    b06_exponentialJitteredRetryBudgetRetriesBehaviorCode,
+
+  '07. Request policy': //
+    b07_requestPolicyBehaviorCode,
+
+  '08. Request policy (decay, no color)': //
+    b08_requestPolicyDecayNoColorBehaviorCode,
+
+  '09. Request policy (decay, no color, postpone retry)': //
+    b09_requestPolicyDecayNoColorPostponeRetryBehaviorCode,
+
+  '10. Request policy (decay, no color, postpone all)': //
+    b10_requestPolicyDecayNoColorPostponeAllBehaviorCode,
 }
 
 function ClientGroupForm({
