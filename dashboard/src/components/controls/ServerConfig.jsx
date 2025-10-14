@@ -202,25 +202,36 @@ export function ServerConfig() {
   }
 
   function selectSlowPreset() {
-    setTimeMaxT(0)
-    setResponseTimeMinT(5000)
-    setResponseTimeMaxT(10000)
-    setEnableResourceManagement(false)
+    setTimeMaxT(120)
+    setResponseTimeMinT(0)
+    setResponseTimeMaxT(15000)
+    setEnableResourceManagement(true)
+    setMaxConcurrentRequests(7000)
+    setMaxQueueSize(10000)
+    setMaxMemoryMB(6144)
+    setMemoryPerRequestMB(0.01)
+    setMemoryLeakRateMBPerSec(0.0)
+    setGcPauseIntervalSec(3600.0)
+    setGcPauseDurationMs(0.1)
     setTimeout(() => {
       setCurves([
         // errors
         [
           { x: 0, y: 0, type: 'curve' },
-          { x: 1, y: 0, type: 'curve' },
+          { x: 0.4, y: 0, type: 'curve' },
+          { x: 0.5, y: 0.1, type: 'curve' },
+          { x: 0.8, y: 0.4, type: 'curve' },
+          { x: 1, y: 0.5, type: 'curve' },
         ],
         // response time, min
         [
-          { x: 0, y: 0, type: 'curve' },
-          { x: 1, y: 0, type: 'curve' },
+          { x: 0, y: 0.002, type: 'curve' },
+          { x: 1, y: 0.8, type: 'curve' },
         ],
         // response time, max
         [
-          { x: 0, y: 1, type: 'curve' },
+          { x: 0, y: 0.0025, type: 'curve' },
+          { x: 0.5, y: 1, type: 'break' },
           { x: 1, y: 1, type: 'curve' },
         ],
       ])

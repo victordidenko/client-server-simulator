@@ -69,7 +69,7 @@ export function Board() {
       <Foldable
         id='rps'
         label='Requests/Responces, rps'
-        height='h-[400px]'
+        height='h-[800px]'
         defaultOpen={true}
       >
         <RequestsPerSecond />
