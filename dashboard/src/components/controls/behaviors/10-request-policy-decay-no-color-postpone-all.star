@@ -1,7 +1,7 @@
 # Adaptive Backoff Policy with Failure Severity Weighting
 # Uses request duration to determine failure severity and calculate appropriate backoff
 # Decays old failures to reduce their impact
-# Pospone some retries which are close to the backoff end
+# Pospone requests which are close to the backoff end
 #
 # - Weights failures based on how long they took (timeouts are worse than quick failures)
 # - Uses sliding window to track recent failure patterns

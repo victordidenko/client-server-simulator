@@ -1,7 +1,7 @@
 # Adaptive Backoff Policy with Failure Severity Weighting & Scout Probes
 # Uses request duration to determine failure severity and calculate appropriate backoff
 # Decays old failures to reduce their impact
-# Pospone some retries which are close to the backoff end
+# Pospone requests which are close to the backoff end
 # Implements scout probes to detect service recovery during backoff periods
 #
 # - Weights failures based on how long they took (timeouts are worse than quick failures)
@@ -88,13 +88,12 @@ def on_request(req):
             req["meta"]["is_scout"] = True
             return {"allow": True, "timeout": DEFAULT_HTTP_TIMEOUT}
 
-        # Not time for scout yet, check retry delay logic
-        if "retry_count" in req["meta"]:
-            jitter = int(random() * MAX_DURATION)
-            remaining_delay = (bucket["limit"] + jitter) - current_time
+        # Not time for scout yet, check postpone delay logic
+        jitter = int(random() * MAX_DURATION)
+        remaining_delay = (bucket["limit"] + jitter) - current_time
 
-            if remaining_delay < MAX_DURATION:
-                return {"allow": True, "delay": remaining_delay}
+        if remaining_delay < MAX_DURATION:
+            return {"allow": True, "delay": remaining_delay}
 
         return {"allow": False, "delay": 0}
 

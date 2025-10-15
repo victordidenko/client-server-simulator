@@ -21,6 +21,7 @@ import b08_requestPolicyDecayNoColorBehaviorCode from './behaviors/08-request-po
 import b09_requestPolicyDecayNoColorPostponeRetryBehaviorCode from './behaviors/09-request-policy-decay-no-color-postpone-retry.star?raw'
 import b10_requestPolicyDecayNoColorPostponeAllBehaviorCode from './behaviors/10-request-policy-decay-no-color-postpone-all.star?raw'
 import b11_requestPolicyDecayNoColorPostponeRetryScoutsBehaviorCode from './behaviors/11-request-policy-decay-no-color-postpone-retry-scouts.star?raw'
+import b12_requestPolicyDecayNoColorPostponeAllScoutsBehaviorCode from './behaviors/12-request-policy-decay-no-color-postpone-all-scouts.star?raw'
 import { ClientBehaviorEditor } from './ClientBehaviorEditor'
 import { Input } from './Input'
 import { MutationErrorIndicator } from './MutationErrorIndicator'
@@ -57,8 +58,11 @@ const behaviors = {
   '10. Request policy (decay, no color, postpone all)': //
     b10_requestPolicyDecayNoColorPostponeAllBehaviorCode,
 
-  '11. Request policy (decay, no color, postpone all, request scouts)': //
+  '11. Request policy (decay, no color, postpone retries, request scouts)': //
     b11_requestPolicyDecayNoColorPostponeRetryScoutsBehaviorCode,
+
+  '12. Request policy (decay, no color, postpone all, request scouts)': //
+    b12_requestPolicyDecayNoColorPostponeAllScoutsBehaviorCode,
 }
 
 function ClientGroupForm({
